@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import os
 from bson import ObjectId
 from datetime import datetime
-from models import initialize_db
 
 load_dotenv()
 
@@ -15,9 +14,6 @@ CORS(app)  # Enable CORS for all routes
 # MongoDB connection
 client = MongoClient(os.getenv("MONGODB_URI"))
 db = client[os.getenv("DB_NAME")]
-
-# Initialize with sample data if empty
-initialize_db(db)
 
 
 @app.route("/api/diet", methods=["GET"])
@@ -35,7 +31,7 @@ def get_diet_plan():
     diet_plan = db.diet_plans.find_one({"date": date_str})
 
     if not diet_plan:
-        return jsonify({"error": "No diet plan found for this date"}), 404
+        return jsonify({})
 
     # Convert ObjectId to string
     diet_plan["_id"] = str(diet_plan["_id"])
@@ -60,7 +56,7 @@ def mark_meal_complete():
     return jsonify({"success": True})
 
 
-@app.route("/api/diet/complete", methods=["DELETE"])
+@app.route("/api/diet/incomplete", methods=["DELETE"])
 def mark_meal_incomplete():
     data = request.json
     if not data or "date" not in data or "mealTime" not in data:
