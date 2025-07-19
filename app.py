@@ -73,5 +73,44 @@ def mark_meal_incomplete():
     return jsonify({"success": True})
 
 
+@app.route("/api/diet/update", methods=["PUT"])
+def update_diet_plan():
+    data = request.json
+    if not data or "date" not in data or "meals" not in data:
+        return jsonify({"error": "Date and meals data are required"}), 400
+
+    # Update or insert the diet plan
+    result = db.diet_plans.update_one(
+        {"date": data["date"]},
+        {
+            "$set": {
+                "meals": data["meals"],
+                "dailyTotal": data.get("dailyTotal", {}),
+                "lastUpdated": datetime.utcnow(),
+            }
+        },
+        upsert=True,
+    )
+
+    if result.modified_count == 0 and not result.upserted_id:
+        return jsonify({"error": "Failed to update diet plan"}), 400
+
+    return jsonify({"success": True})
+
+
+@app.route("/api/diet", methods=["DELETE"])
+def delete_diet_plan():
+    date_str = request.args.get("date")
+    if not date_str:
+        return jsonify({"error": "Date parameter is required"}), 400
+
+    result = db.diet_plans.delete_one({"date": date_str})
+
+    if result.deleted_count == 0:
+        return jsonify({"error": "No diet plan found for this date"}), 404
+
+    return jsonify({"success": True})
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
