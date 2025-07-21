@@ -8,7 +8,7 @@ load_dotenv()
 from routes.diet_routes import diet_bp
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 app.register_blueprint(diet_bp)
 
