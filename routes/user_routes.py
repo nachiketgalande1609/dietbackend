@@ -128,7 +128,7 @@ def login():
     user = db.users.find_one({"email": data["email"]})
 
     if not user:
-        return jsonify({"success": False, "error": "User not registered"}), 401
+        return jsonify({"success": False, "error": "Email not registered"}), 401
 
     # Check password
     if not check_password_hash(user["password"], data["password"]):
@@ -161,53 +161,3 @@ def login():
         ),
         200,
     )
-
-
-@user_bp.route("/me", methods=["GET"])
-def get_current_user():
-    # Get token from header
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return (
-            jsonify({"success": False, "error": "Authorization token is required"}),
-            401,
-        )
-
-    token = auth_header.split(" ")[1]
-
-    try:
-        # Decode token
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        user_id = payload["user_id"]
-
-        # Find user by ID
-        user = db.users.find_one({"_id": ObjectId(user_id)})
-
-        if not user:
-            return jsonify({"success": False, "error": "User not found"}), 404
-
-        # Return user data (without password)
-        return (
-            jsonify(
-                {
-                    "success": True,
-                    "user": {
-                        "id": str(user["_id"]),
-                        "email": user["email"],
-                        "firstName": user["firstName"],
-                        "lastName": user["lastName"],
-                        "username": user["username"],
-                        "age": user["age"],
-                        "birthDate": user["birthDate"],
-                        "weight": user["weight"],
-                        "height": user["height"],
-                    },
-                }
-            ),
-            200,
-        )
-
-    except jwt.ExpiredSignatureError:
-        return jsonify({"success": False, "error": "Token has expired"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"success": False, "error": "Invalid token"}), 401
